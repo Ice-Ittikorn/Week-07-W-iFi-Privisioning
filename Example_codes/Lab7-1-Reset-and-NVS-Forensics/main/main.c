@@ -7,8 +7,8 @@
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "driver/gpio.h"
-#include "wifi_provisioning/manager.h"
-#include "wifi_provisioning/scheme_softap.h"
+#include "network_provisioning/manager.h"
+#include "network_provisioning/scheme_softap.h"
 
 static const char *TAG = "LAB7_1_RESET";
 
@@ -125,26 +125,26 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
 
     // 4. ตรวจสอบสถานะว่าเคย Provision มาก่อนหรือไม่
-    wifi_prov_mgr_config_t config = {
-        .scheme = wifi_prov_scheme_softap, // default scheme
-        .scheme_event_handler = WIFI_PROV_EVENT_HANDLER_NONE
+    network_prov_mgr_config_t config = {
+        .scheme = network_prov_scheme_softap, // default scheme
+        .scheme_event_handler = NETWORK_PROV_EVENT_HANDLER_NONE
     };
-    ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
+    ESP_ERROR_CHECK(network_prov_mgr_init(config));
 
     bool provisioned = false;
-    ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
+    ESP_ERROR_CHECK(network_prov_mgr_is_wifi_provisioned(&provisioned));
 
     if (!provisioned) {
         ESP_LOGW(TAG, "--------------------------------------------------");
         ESP_LOGW(TAG, "[STATUS]: Device is NOT provisioned (NVS is empty)");
         ESP_LOGW(TAG, "Ready for Provisioning Lab 7-2 (SoftAP) or 7-3 (BLE)!");
         ESP_LOGW(TAG, "--------------------------------------------------");
-        wifi_prov_mgr_deinit();
+        network_prov_mgr_deinit();
     } else {
         ESP_LOGI(TAG, "--------------------------------------------------");
         ESP_LOGI(TAG, "[STATUS]: Already provisioned! Starting Wi-Fi Station");
         ESP_LOGI(TAG, "--------------------------------------------------");
-        wifi_prov_mgr_deinit();
+        network_prov_mgr_deinit();
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_start());
     }
