@@ -1,0 +1,11 @@
+menu "Example Configuration"
+
+    config EXAMPLE_RESET_PROVISIONED
+        bool "Reset Provisioned state (Erase credentials)"
+        default n
+        help
+            หากเปิดใช้งาน อุปกรณ์จะลบ Wi-Fi credentials ที่เก็บไว้ใน NVS
+            ทุกครั้งที่บูตเครื่อง ทำให้ต้องทำ provisioning ใหม่เสมอ
+            ใช้สำหรับทดสอบ/สาธิตขั้นตอน provisioning ซ้ำ ๆ
+
+endmenu

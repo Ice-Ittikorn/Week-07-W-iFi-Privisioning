@@ -2,3 +2,5 @@
 Example_codes/Lab7-1-Reset-and-NVS-Forensics/managed_components/
 Example_codes/Lab7-1-Reset-and-NVS-Forensics/dependencies.lock
 Example_codes/Lab7-1-Reset-and-NVS-Forensics/main/idf_component.yml
+Example_codes/Lab7-2-SoftAP-Provisioning/managed_components/
+Example_codes/Lab7-2-SoftAP-Provisioning/dependencies.lock
