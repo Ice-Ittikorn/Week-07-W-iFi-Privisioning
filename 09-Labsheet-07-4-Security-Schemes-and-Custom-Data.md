@@ -167,7 +167,27 @@ wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
 
 ## 8. คำถามท้ายการทดลอง (Post-Lab Questions)
 1. การใช้ **Proof-of-Possession (PoP)** ช่วยป้องกันการโจมตีประเภทใดได้บ้าง?
+```
+    - Rogue/Unauthorized Provisioning — ป้องกันคนแปลกหน้าที่อยู่ในระยะสัญญาณ BLE แต่ไม่รู้รหัส PoP ไม่ให้ยึดอุปกรณ์ไป Provision WiFi ของตัวเองแทน เพราะต่อให้เชื่อมต่อ BLE ได้ ก็ผ่าน handshake ไม่ได้
+    - Man-in-the-Middle ระหว่าง Key Exchange — Security 1 ใช้ PoP เป็น input ในการยืนยันตัวตนของทั้งสองฝั่งระหว่างแลกเปลี่ยน public key ทำให้ผู้ดักฟัง ที่อยู่กลางทางไม่สามารถสวมรอยเป็น ESP32 หรือเป็น App เพื่อขโมย Session Key ไปถอดรหัสข้อมูลได้
+    - การรั่วไหลของ WiFi Credential — เนื่องจากข้อมูล WiFi SSID/Password ที่ส่งผ่าน BLE ไปยัง ESP32 ถูกเข้ารหัสด้วย Session Key ที่มาจาก PoP ถ้าไม่มี PoP ที่ถูกต้อง ผู้โจมตีจะดักฟังแล้วถอดรหัสข้อมูล WiFi ที่ส่งผ่านไม่ได้
+```
 2. หากไม่มีการใช้ PoP (เช่น ใน Security 0) ผู้โจมตีที่อยู่ในรัศมีสัญญาณบลูทูธสามารถทำสิ่งใดกับอุปกรณ์ได้บ้าง?
+```
+    - เชื่อมต่อและ Provision อุปกรณ์แทนเจ้าของจริง ส่ง SSID Password ปลอมเข้าไป ทำให้ ESP32 ไปเชื่อมต่อ WiFi ของผู้โจมตีเอง แล้วดักข้อมูลที่อุปกรณ์ส่งออกไปทั้งหมด 
+    - ดักฟัง  ข้อมูล WiFi Credential ที่ส่งผ่าน BLE แบบ Plaintext — เห็น SSID Password ของ WiFi บ้าน องค์กรของเจ้าของอุปกรณ์ตรงๆ โดยไม่ต้องถอดรหัสอะไรเลย
+    - ส่งข้อมูลปลอมเข้า Custom Data Endpoint เช่นถ้ามี endpoint ที่ตั้งค่า activation code, MQTT broker URL, Owner ID ผู้โจมตีสามารถยัดค่าที่เป็นอันตราย เข้าไปแทนเจ้าของอุปกรณ์ตัวจริง
+    - Denial of Service เชิง Provisioning —ยึด session การเชื่อมต่อ BLE ไว้ก่อนเจ้าของจริง ทำให้เจ้าของอุปกรณ์ Provision อุปกรณ์ของตัวเองไม่ได้
+```
 3. ในการประยุกต์ใช้งานเชิงพาณิชย์จริง เราสามารถนำ **Custom Data Endpoint** ไปใช้ส่งข้อมูลประเภทใดได้อีกบ้าง (ยกตัวอย่าง 2 กรณี)?
+```
+    - การผูกอุปกรณ์กับบัญชีผู้ใช้  ตอน Provisioning ส่ง User ID / Owner Email / Activation Token จากแอปมือถือไปเก็บใน NVS ของ ESP32 เพื่อให้อุปกรณ์รู้ว่าเป็นของผู้ใช้คนไหนตั้งแต่แรกเริ่ม ก่อนที่จะเชื่อมต่อ Cloud/Backend ครั้งแรกด้วยซ้ำ ใช้แทนขั้นตอน pairing ทีหลังผ่าน Cloud
+    - การตั้งค่า Endpoint การเชื่อมต่อ Cloud/IoT Platform — ส่ง MQTT Broker URL, Server Certificate/Fingerprint, หรือ Device Token สำหรับเชื่อมต่อ IoT Platform เช่น AWS IoT, Azure IoT Hub, หรือ Private MQTT Broker ขององค์กรเอง เพื่อให้ผลิตภัณฑ์ชิ้นเดียวกันสามารถขายให้ลูกค้าหลายรายที่ใช้ Backend คนละตัวกันได้ โดยไม่ต้อง flash firmware ใหม่ทุกครั้ง
+```
 4. ในฟังก์ชัน `custom_prov_data_handler()` เหตุใดหน่วยความจำที่จัดสรรให้ `*outbuf` จึงถูก Free โดย Protocomm Layer อัตโนมัติหลังจากส่งข้อมูลเสร็จ?
+```
+- Handler ของผู้ใช้ เช่น custom_prov_data_handler มีหน้าที่แค่ สร้าง ข้อมูลตอบกลับด้วย malloc()/strdup() แล้วส่ง pointer กลับผ่าน *outbuf เท่านั้น  ไม่ได้เป็นคนส่งข้อมูลออกไปทาง BLE/HTTP เอง
+- หลังจาก Handler return ESP_OK กลับมา ตัว Protocomm Layer ชั้นที่อยู่เหนือ Endpoint Dispatcher จะเป็นคนนำ *outbuf/*outlen ไปเข้ารหัสด้วย Session Key แล้วส่งออกไปยัง Client ต่อ Protocomm คือเจ้าของ pointer นี้ในช่วงเวลาถัดจากนี้ 
+- เมื่อส่งข้อมูลออกไปเรียบร้อยแล้ว Protocomm รู้ตัวว่าไม่มีใครใช้ buffer นี้ต่อแล้ว จึงเป็นผู้รับผิดชอบเรียก free() เอง เพื่อคืนหน่วยความจำกลับสู่ Heap
+```
 
