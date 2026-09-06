@@ -149,9 +149,8 @@ wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
 3. การจัดสรรหน่วยความจำแบบไดนามิกด้วย `strdup()` ให้กับ `*outbuf`
 4. ทำไมตัวแปร `*outbuf` จึงต้องจัดสรรใน Heap Memory (ทำไมจึงใช้ตัวแปร Local Static Array ธรรมดาไม่ได้)?
 
-```text
-[พื้นที่สำหรับแนบรูปภาพ Diagram ที่นักศึกษาเขียนขึ้นด้วย Draw.io / Mermaid / วาดมือ]
-```
+<img width="564" height="521" alt="image" src="https://github.com/user-attachments/assets/f807226d-82e7-43fc-957b-cea502242419" />
+
 
 ---
 
@@ -186,8 +185,8 @@ wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
 ```
 4. ในฟังก์ชัน `custom_prov_data_handler()` เหตุใดหน่วยความจำที่จัดสรรให้ `*outbuf` จึงถูก Free โดย Protocomm Layer อัตโนมัติหลังจากส่งข้อมูลเสร็จ?
 ```
-- Handler ของผู้ใช้ เช่น custom_prov_data_handler มีหน้าที่แค่ สร้าง ข้อมูลตอบกลับด้วย malloc()/strdup() แล้วส่ง pointer กลับผ่าน *outbuf เท่านั้น  ไม่ได้เป็นคนส่งข้อมูลออกไปทาง BLE/HTTP เอง
-- หลังจาก Handler return ESP_OK กลับมา ตัว Protocomm Layer ชั้นที่อยู่เหนือ Endpoint Dispatcher จะเป็นคนนำ *outbuf/*outlen ไปเข้ารหัสด้วย Session Key แล้วส่งออกไปยัง Client ต่อ Protocomm คือเจ้าของ pointer นี้ในช่วงเวลาถัดจากนี้ 
-- เมื่อส่งข้อมูลออกไปเรียบร้อยแล้ว Protocomm รู้ตัวว่าไม่มีใครใช้ buffer นี้ต่อแล้ว จึงเป็นผู้รับผิดชอบเรียก free() เอง เพื่อคืนหน่วยความจำกลับสู่ Heap
+    - Handler ของผู้ใช้ เช่น custom_prov_data_handler มีหน้าที่แค่ สร้าง ข้อมูลตอบกลับด้วย malloc()/strdup() แล้วส่ง pointer กลับผ่าน *outbuf เท่านั้น  ไม่ได้เป็นคนส่งข้อมูลออกไปทาง BLE/HTTP เอง
+    - หลังจาก Handler return ESP_OK กลับมา ตัว Protocomm Layer ชั้นที่อยู่เหนือ Endpoint Dispatcher จะเป็นคนนำ *outbuf/*outlen ไปเข้ารหัสด้วย Session Key แล้วส่งออกไปยัง Client ต่อ Protocomm คือเจ้าของ pointer นี้ในช่วงเวลาถัดจากนี้ 
+    - เมื่อส่งข้อมูลออกไปเรียบร้อยแล้ว Protocomm รู้ตัวว่าไม่มีใครใช้ buffer นี้ต่อแล้ว จึงเป็นผู้รับผิดชอบเรียก free() เอง เพื่อคืนหน่วยความจำกลับสู่ Heap
 ```
 
