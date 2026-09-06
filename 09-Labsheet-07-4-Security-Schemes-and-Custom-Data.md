@@ -159,9 +159,9 @@ wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
 
 | สถานการณ์ทดสอบ | ค่า PoP ที่ป้อน | ผลลัพธ์บนแอปมือถือ | ข้อความ Log ใน Serial Monitor |
 | :--- | :--- | :--- | :--- |
-| **1. ป้อน PoP ผิดพลาด** | `wrong1234` | | |
-| **2. ป้อน PoP ถูกต้อง** | `abcd1234` | | |
-| **3. ส่ง Custom Data** | `TEST_DATA_999` | | |
+| **1. ป้อน PoP ผิดพลาด** | `wrong1234` |Failed to initialise session with the device |<img width="737" height="141" alt="image" src="https://github.com/user-attachments/assets/538035e4-c791-4fa0-8572-857f9731c66e" />|
+| **2. ป้อน PoP ถูกต้อง** | `abcd1234` | Device has been successfully provisioned!|[SECURITY SUCCESS]: Valid PoP! Secured Session OK!|
+| **3. ส่ง Custom Data** | `TEST_DATA_999` |แอปส่ง Payload ไปยัง custom-data ได้รับ ACK |[CUSTOM DATA RECEIVED]: TEST_DATA_99 |
 
 ---
 
