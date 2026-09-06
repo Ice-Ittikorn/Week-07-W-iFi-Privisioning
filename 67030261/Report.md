@@ -39,3 +39,38 @@ GPIO 0 เป็น Strapping Pin ที่ชิปใช้เลือกโ�
 ```
     ใช้แหล่งจ่ายไฟ โดยออกแบบเป็น Power-Cycle Reset  คือให้เฟิร์มแวร์นับจำนวนครั้งที่ถูกตัด-ต่อไฟติดต่อกันอย่างรวดเร็ว เก็บ counter ไว้ใน NVS หรือ RTC memory ถ้าครบตามกำหนด เช่น เปิด-ปิดเบรกเกอร์ 5 ครั้งติดภายใน 10 วินาที จึงสั่ง nvs_flash_erase() แล้วกลับเข้าโหมด Provisioning ส่วนถ้าบูตแล้วอยู่นานเกิน 10 วินาทีก็รีเซ็ต counter กลับเป็นศูนย์ ถือว่าเป็นการเปิดใช้งานปกติ
 ```
+
+---
+
+# ใบงานที่ 7.2 การคอนฟิก Wi-Fi ผ่าน SoftAP Scheme และการวิเคราะห์ Protocomm Endpoints
+
+## 5. กิจกรรมถอดรหัสซอร์สโค้ดและเขียนผังงาน (Code Deconstruction & Sequence Flow Assignment)
+### ภารกิจที่ 1: ผังลำดับการสื่อสารผ่าน HTTP Endpoints (SoftAP Scheme Sequence Flow)
+<img width="404" height="540" alt="image" src="https://github.com/user-attachments/assets/258f19cb-5faa-4e0d-8c80-8341cbaafe64" />
+
+## 6. ตารางบันทึกผลการทดลอง (Experiment Results)
+
+| รายการตรวจสอบ | ค่าที่บันทึกได้จากการทดลอง |
+| :--- | :--- |
+| **1. ชื่อ SoftAP SSID ของ ESP32** | PROV_4593E4 |
+| **2. รหัส PoP (Proof of Possession)** | abcd1234 |
+| **3. ข้อความใน QR Code Payload (JSON)** | {"ver":"v1","name":"PROV_4593E4","pop":"abcd1234","transport":"softap"} |
+| **4. พฤติกรรมไฟ LED 3 (GPIO 5) ช่วงรอ vs ช่วงส่งข้อมูล** | ช่วงรอ: LED ติดค้าง <br/>ช่วงส่ง: LED ดับ |
+| **5. IP Address ที่ ESP32 ได้รับจาก Router** | 172.20.10.2 |
+| **6. เวลาที่ใช้ตั้งแต่เริ่มจนจบกระบวนการ (วินาที)** | 63.37 |
+
+---
+
+## 7. คำถามท้ายการทดลอง (Post-Lab Questions)
+1. ในโหมด SoftAP Scheme สมาร์ตโฟนส่งข้อมูลหา ESP32 ผ่านโปรโตคอลและ IP Address ใด?
+```
+ใช้ HTTP POST ยิงไปที่ ESP32 ตอนที่มันเป็น SoftAP ซึ่ง ESP32 จะตั้งตัวเองเป็นเกตเวย์ที่ 192.168.4.1 เสมอ มือถือต้องต่อ Wi-Fi เข้า SSID ของ esp32 ก่อน ถึงจะยิง HTTP ไปที่ IP นี้ผ่าน endpoint /prov-session, /prov-scan, /prov-config ได้
+```
+2. หากผู้ใช้ป้อนรหัสผ่าน Wi-Fi ผิดในแอปมือถือ จะเกิด Event ใดขึ้นบน ESP32 (`WIFI_PROV_CRED_FAIL` หรือไม่) และ ESP32 มีพฤติกรรมอย่างไร?
+```
+จะเกิด Event NETWORK_PROV_WIFI_CRED_FAIL จะพิมพ์ log ระดับ error ว่า "Wi-Fi Connection failed with provided credentials!" แต่ ESP32 ไม่รีสตาร์ทหรือปิด Provisioning — ตัว Provisioning Manager ยังทำงานต่อ, LED3 (GPIO5) ยังติดค้างอยู่ รอให้มือถือส่ง /prov-config เข้ามาใหม่อีกครั้งได้เรื่อยๆ จนกว่าจะเชื่อมต่อสำเร็จ
+```
+3. ทำไมผู้ผลิต IoT ส่วนใหญ่จึงมองว่ากระบวนการเชื่อมต่อแบบ SoftAP มีขั้นตอนที่ยุ่งยากสำหรับผู้ใช้ทั่วไปเมื่อเทียบกับ BLE?
+```
+เพราะ SoftAP บังคับให้ผู้ใช้ต้อง ออกจากแอปไปที่หน้า Wi-Fi Settings ของมือถือเอง เพื่อสลับไปต่อ SSID ของ ESP32 ก่อน ระหว่างนั้นจะหลุดจากอินเทอร์เน็ต หรือยังเด้งเตือนหรือตัดการเชื่อมต่อ Wi-Fi ที่ไม่มีอินเทอร์เน็ตออกเองอัตโนมัติ ทำให้ session หลุดกลางคัน ส่วน BLE ไม่ต้องสลับเครือข่ายเลย แอปคุยกับ ESP32 ผ่าน BLE ควบคู่กับ Wi-Fi เดิมได้ตลอด ประสบการณ์ผู้ใช้เลยลื่นไหลกว่ามาก
+```
