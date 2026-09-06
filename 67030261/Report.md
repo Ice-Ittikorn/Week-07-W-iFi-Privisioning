@@ -118,6 +118,8 @@ GPIO 0 เป็น Strapping Pin ที่ชิปใช้เลือกโ�
 # ใบงานที่ 7.4: การทดสอบ Security Schemes (PoP) และการรับส่ง Custom Data Endpoints
 ## 6. กิจกรรมถอดรหัสซอร์สโค้ดและเขียนผังงาน (Code Deconstruction & Security Flow Assignment)
 ### ภารกิจที่ 1: ผังขั้นตอนการตรวจสอบ PoP (Security Handshake Decision Flow)
+<img width="427" height="482" alt="image" src="https://github.com/user-attachments/assets/6cbe1773-6345-4fc9-9418-c1ae048a8fea" />
+
 ### ภารกิจที่ 2: ผังการรับส่งข้อมูลผ่าน Custom Endpoint (Custom Data Handler Flow)
 <img width="564" height="521" alt="image" src="https://github.com/user-attachments/assets/f807226d-82e7-43fc-957b-cea502242419" />
 
