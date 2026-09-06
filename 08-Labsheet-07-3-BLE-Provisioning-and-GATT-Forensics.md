@@ -114,6 +114,10 @@ I (26120) app: Connected with IP Address: 192.168.1.155
 - **Primary Service (128-bit UUID: `021a9004-...`)**
   - **Characteristic UUIDs** แต่ละตัว
   - **Descriptor 0x2901 (User Description)** ที่ผูกเข้ากับ Protocomm Endpoints (`prov-session`, `prov-config`, `prov-scan`, `proto-ver`, `custom-data`)
+ 
+<img width="946" height="410" alt="image" src="https://github.com/user-attachments/assets/3839d837-c6d3-428d-88f0-21b65c01dba1" />
+
+---
 
 ### ภารกิจที่ 2: ผังลำดับการคืนหน่วยความจำ Bluetooth (BLE Lifecycle & Memory Reclaim Flow)
 ให้นักศึกษาวาด Flowchart / Sequence แสดงว่า:
@@ -121,9 +125,8 @@ I (26120) app: Connected with IP Address: 192.168.1.155
 2. เมื่อเชื่อมต่อ Wi-Fi สำเร็จ (`WIFI_PROV_CRED_SUCCESS`) $\rightarrow$ เกิด Event `WIFI_PROV_END`
 3. Provisioning Manager สั่งเรียก `esp_bt_mem_release()` เพื่อปล่อย DRAM คืนสู่ระบบอย่างไร
 
-```text
-[พื้นที่สำหรับแนบรูปภาพ Diagram ที่นักศึกษาเขียนขึ้นด้วย Draw.io / Mermaid / วาดมือ]
-```
+<img width="697" height="487" alt="image" src="https://github.com/user-attachments/assets/3cf53233-2291-41fc-85a4-e107da17c5e6" />
+
 
 ---
 
@@ -141,6 +144,16 @@ I (26120) app: Connected with IP Address: 192.168.1.155
 
 ## 7. คำถามท้ายการทดลอง (Post-Lab Questions)
 1. เหตุใด BLE Provisioning จึงไม่ส่งผลให้สัญญาณ Wi-Fi บนสมาร์ตโฟนของผู้ใช้หลุดระหว่างทำรายการ?
+```
+   เพราะ BLE กับ Wi-Fi เป็นคนละ radio interface กันบนโทรศัพท์ การรับส่งข้อมูล provisioning วิ่งผ่าน GATT บนช่อง Bluetooth ทั้งหมด ตัว Wi-Fi interface ของโทรศัพท์จึงยังเกาะ AP เดิมอยู่ตลอด
+ต่างจาก SoftAP Scheme ที่โทรศัพท์ต้องสลับ Wi-Fi ไปเกาะ AP ของ ESP32 เอง ทำให้หลุดจากอินเทอร์เน็ตชั่วคราว ต้องสลับกลับเองหลังเสร็จ และเสี่ยงที่ระบบ Android/iOS จะดีดกลับ AP เดิมกลางคัน เพราะ AP ของ ESP32 ไม่มีอินเทอร์เน็ต ทำให้ provisioning ล้มเหลว
+```
 2. Descriptor `0x2901` มีความสำคัญอย่างไรต่อการที่แอปพลิเคชันมือถือจะทราบว่า Characteristic แต่ละตัวใช้ทำหน้าที่อะไร?
+```
+   Descriptor 0x2901  เป็นสตริงข้อความที่ผูกกับ characteristic นั้น ๆ ทำหน้าที่บอกชื่อ Protocomm Endpoint เช่น prov-session, prov-config, prov-scan แอปฝั่งมือถือจึงใช้วิธี discover service แล้วอ่าน 0x2901 ของทุก characteristic เพื่อ map ชื่อ endpoint handle แบบ dynamic ได้เอง โดยไม่ต้อง hard-code UUID ไว้ในแอป
+ข้อดีคือ firmware เปลี่ยน UUID ได้ แอปเดิมก็ยังใช้งานได้ และในทางกลับกัน ในมุม forensic นี่คือช่องที่ทำให้เราใช้ nRF Connect ส่องเห็นโครงสร้างภายในของอุปกรณ์ได้ทั้งหมดโดยไม่ต้องมี source code
+```
 3. การที่ ESP-IDF มีฟังก์ชัน `esp_bt_mem_release()` มีประโยชน์อย่างไรต่อการทำงานของแอปพลิเคชัน IoT หลังเชื่อมต่อ Wi-Fi สำเร็จ?
-
+```
+   BLE stack  กินหน่วยความจำ DRAM ประมาณ 60–70 KB ซึ่งเป็นสัดส่วนที่สูงมากเมื่อเทียบกับ RAM ทั้งหมดของ ESP32 ประมาณ 320 KB แต่ในงานลักษณะนี้ BLE ถูกใช้แค่ช่วง provisioning ครั้งแรกครั้งเดียว หลังจากได้ SSID Password แล้วอุปกรณ์จะสื่อสารผ่าน Wi-Fi อย่างเดียวตลอดอายุการใช้งาน NETWORK_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM ตอน network_prov_mgr_deinit() จึงคืน RAM กลับสู่ heap ให้แอปพลิเคชันหลักใช้ต่อ เช่น TLS/MQTT buffer 
+```
