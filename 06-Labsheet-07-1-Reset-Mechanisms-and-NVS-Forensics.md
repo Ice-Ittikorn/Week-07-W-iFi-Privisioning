@@ -182,6 +182,7 @@ void app_main(void)
 ให้นักศึกษาวาด State Diagram แสดงการเปลี่ยนสถานะของ **LED 1 (GPIO 2)**:
 - เงื่อนไขใดทำให้ LED 1 เข้าสู่สถานะ `LED_STA_MODE_DISCONNECTED` (กระพริบ 200ms Mark / 200ms Space)
 - เงื่อนไขหรือ Event ใดทำให้เปลี่ยนเป็น `LED_STA_MODE_CONNECTED` (Heartbeat 200ms ทุก 1s)
+<img width="593" height="484" alt="image" src="https://github.com/user-attachments/assets/75f5288c-fde5-41b2-88fb-1af642cabe06" />
 
 ---
 
