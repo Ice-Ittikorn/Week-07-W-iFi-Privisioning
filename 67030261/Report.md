@@ -74,3 +74,41 @@ GPIO 0 เป็น Strapping Pin ที่ชิปใช้เลือกโ�
 ```
 เพราะ SoftAP บังคับให้ผู้ใช้ต้อง ออกจากแอปไปที่หน้า Wi-Fi Settings ของมือถือเอง เพื่อสลับไปต่อ SSID ของ ESP32 ก่อน ระหว่างนั้นจะหลุดจากอินเทอร์เน็ต หรือยังเด้งเตือนหรือตัดการเชื่อมต่อ Wi-Fi ที่ไม่มีอินเทอร์เน็ตออกเองอัตโนมัติ ทำให้ session หลุดกลางคัน ส่วน BLE ไม่ต้องสลับเครือข่ายเลย แอปคุยกับ ESP32 ผ่าน BLE ควบคู่กับ Wi-Fi เดิมได้ตลอด ประสบการณ์ผู้ใช้เลยลื่นไหลกว่ามาก
 ```
+
+---
+
+# ใบงานที่ 7.3 การคอนฟิก Wi-Fi ผ่าน BLE Scheme และการสืบสวน GATT Services (BLE Forensics)
+## 5. กิจกรรมถอดรหัสซอร์สโค้ดและเขียนผังงาน (Code Deconstruction & BLE GATT Architecture Assignment)
+### ภารกิจที่ 1: ผังโครงสร้าง GATT Tree & Endpoint Mapping
+<img width="946" height="410" alt="image" src="https://github.com/user-attachments/assets/3839d837-c6d3-428d-88f0-21b65c01dba1" />
+
+### ภารกิจที่ 2: ผังลำดับการคืนหน่วยความจำ Bluetooth (BLE Lifecycle & Memory Reclaim Flow)
+<img width="697" height="487" alt="image" src="https://github.com/user-attachments/assets/3cf53233-2291-41fc-85a4-e107da17c5e6" />
+
+## 6. ตารางบันทึกผลการทดลอง (Experiment Results)
+
+| รายการตรวจสอบ | ผลการทดลอง / ข้อมูลที่สังเกตได้ |
+| :--- | :--- |
+| **1. BLE Device Name ที่สแกนเจอ** | PROV_4593E4 |
+| **2. Primary Service UUID (128-bit)** | 021a9004-0382-4aea-bff4-6b3f1c5adfb4 |
+| **3. Characteristic Endpoint ที่พบ (0x2901)** | 1. 021aff50-0382-4aea-bff4-6b3f1c5adfb4 <br/>2. 021aff51-0382-4aea-bff4-6b3f1c5adfb4<br/>3. 	021aff52-0382-4aea-bff4-6b3f1c5adfb4 |
+| **4. พฤติกรรมไฟ LED 2 (GPIO 4) ช่วงรอ vs ช่วงต่อ BLE** | ช่วงรอ: LED 2 ติดค้างสว่างตลอด <br/>ช่วงต่อ: LED 2 ติดค้างสว่างตลอด <br/> หลัง provision สำเร็จ: LED 2 ดับ และ LED 1 ติดเมื่อได้ IP|
+| **5. พฤติกรรมเมื่อต่อ Wi-Fi สำเร็จ** | มี Log คืนหน่วยความจำ Bluetooth  |
+
+---
+
+## 7. คำถามท้ายการทดลอง (Post-Lab Questions)
+1. เหตุใด BLE Provisioning จึงไม่ส่งผลให้สัญญาณ Wi-Fi บนสมาร์ตโฟนของผู้ใช้หลุดระหว่างทำรายการ?
+```
+   เพราะ BLE กับ Wi-Fi เป็นคนละ radio interface กันบนโทรศัพท์ การรับส่งข้อมูล provisioning วิ่งผ่าน GATT บนช่อง Bluetooth ทั้งหมด ตัว Wi-Fi interface ของโทรศัพท์จึงยังเกาะ AP เดิมอยู่ตลอด
+ต่างจาก SoftAP Scheme ที่โทรศัพท์ต้องสลับ Wi-Fi ไปเกาะ AP ของ ESP32 เอง ทำให้หลุดจากอินเทอร์เน็ตชั่วคราว ต้องสลับกลับเองหลังเสร็จ และเสี่ยงที่ระบบ Android/iOS จะดีดกลับ AP เดิมกลางคัน เพราะ AP ของ ESP32 ไม่มีอินเทอร์เน็ต ทำให้ provisioning ล้มเหลว
+```
+2. Descriptor `0x2901` มีความสำคัญอย่างไรต่อการที่แอปพลิเคชันมือถือจะทราบว่า Characteristic แต่ละตัวใช้ทำหน้าที่อะไร?
+```
+   Descriptor 0x2901  เป็นสตริงข้อความที่ผูกกับ characteristic นั้น ๆ ทำหน้าที่บอกชื่อ Protocomm Endpoint เช่น prov-session, prov-config, prov-scan แอปฝั่งมือถือจึงใช้วิธี discover service แล้วอ่าน 0x2901 ของทุก characteristic เพื่อ map ชื่อ endpoint handle แบบ dynamic ได้เอง โดยไม่ต้อง hard-code UUID ไว้ในแอป
+ข้อดีคือ firmware เปลี่ยน UUID ได้ แอปเดิมก็ยังใช้งานได้ และในทางกลับกัน ในมุม forensic นี่คือช่องที่ทำให้เราใช้ nRF Connect ส่องเห็นโครงสร้างภายในของอุปกรณ์ได้ทั้งหมดโดยไม่ต้องมี source code
+```
+3. การที่ ESP-IDF มีฟังก์ชัน `esp_bt_mem_release()` มีประโยชน์อย่างไรต่อการทำงานของแอปพลิเคชัน IoT หลังเชื่อมต่อ Wi-Fi สำเร็จ?
+```
+   BLE stack  กินหน่วยความจำ DRAM ประมาณ 60–70 KB ซึ่งเป็นสัดส่วนที่สูงมากเมื่อเทียบกับ RAM ทั้งหมดของ ESP32 ประมาณ 320 KB แต่ในงานลักษณะนี้ BLE ถูกใช้แค่ช่วง provisioning ครั้งแรกครั้งเดียว หลังจากได้ SSID Password แล้วอุปกรณ์จะสื่อสารผ่าน Wi-Fi อย่างเดียวตลอดอายุการใช้งาน NETWORK_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM ตอน network_prov_mgr_deinit() จึงคืน RAM กลับสู่ heap ให้แอปพลิเคชันหลักใช้ต่อ เช่น TLS/MQTT buffer 
+```
